@@ -178,6 +178,7 @@ public class GoogleDrive {
 
         Drive.Files.Insert request = drive.files().insert(metaData, mediaContent);
         request.getMediaHttpUploader().setProgressListener(new ProgressListener());
+        request.setConvert(true); //TODO: Que esto se pase por parámetro?
         return request.execute();
     }
 
