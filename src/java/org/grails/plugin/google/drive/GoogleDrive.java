@@ -163,6 +163,7 @@ public class GoogleDrive {
         if (mediaContent != null) {
             request.getMediaHttpUploader().setProgressListener(new ProgressListener());
         }
+        request.setConvert(true); //TODO: Que esto se pase por parámetro?
         return request.execute();
     }
 
