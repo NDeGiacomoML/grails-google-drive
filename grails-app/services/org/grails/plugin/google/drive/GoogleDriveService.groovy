@@ -73,17 +73,20 @@ class GoogleDriveService {
         return new GoogleDrive(key, secret, config.credentials.path, 'grails')
     }
 
-    private def getServiceConfiguredDrive(jsonConfig) {
+    private def getServiceConfiguredDrive(json) {
         def config = grailsApplication.config.google.drive
         def key = null
         def secret = null
+        def jsonConfig = null
 
-        key = jsonConfig?.email ?: config.key
+
+
+        key = json?.client_email ?: config.key
         if (!key) {
             throw new RuntimeException('Google Drive API email is not specified for service account')
         }
 
-        secret = jsonConfig?.privateKey ?: config.secret
+        secret = json?.private_key ?: config.secret
         if (!secret) {
             throw new RuntimeException('Google Drive API private key is not specified for service account')
         }
