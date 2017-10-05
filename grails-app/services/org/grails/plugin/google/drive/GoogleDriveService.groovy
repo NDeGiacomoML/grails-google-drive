@@ -81,6 +81,7 @@ class GoogleDriveService {
 
         try {
             def jsonFile = new java.io.File(configFilePath)
+            log.error("the relative path is" + new java.io.File(""))
             log.error ("The path is " + jsonFile.getAbsolutePath())
             jsonConfig = JSONConfigLoader.getConfigFromJSON('service', jsonFile)
         } catch (IOException e) {
