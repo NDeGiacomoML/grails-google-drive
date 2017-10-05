@@ -41,7 +41,7 @@ class GoogleDriveService {
                     drive = getWebConfiguredDrive(config.credentials.filePath)
                     break;
                 case 'service':
-                    drive = getServiceConfiguredDrive(config.credentials.filePath)
+                    drive = getServiceConfiguredDrive(config.json)
                     break;
             }
         }
@@ -73,22 +73,10 @@ class GoogleDriveService {
         return new GoogleDrive(key, secret, config.credentials.path, 'grails')
     }
 
-    private def getServiceConfiguredDrive(configFilePath) {
+    private def getServiceConfiguredDrive(jsonConfig) {
         def config = grailsApplication.config.google.drive
         def key = null
         def secret = null
-        def jsonConfig = null
-
-        try {
-            def jsonFile = new java.io.File(configFilePath)
-            log.error("the relative path is" + new java.io.File("").getAbsolutePath())
-            log.error ("The path is " + jsonFile.getAbsolutePath())
-            jsonConfig = JSONConfigLoader.getConfigFromJSON('service', jsonFile)
-        } catch (IOException e) {
-            log.error e.message
-        }
-
-        log.error ("The json is" + jsonConfig)
 
         key = jsonConfig?.email ?: config.key
         if (!key) {
