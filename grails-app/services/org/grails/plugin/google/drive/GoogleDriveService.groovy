@@ -81,10 +81,13 @@ class GoogleDriveService {
 
         try {
             def jsonFile = new java.io.File(configFilePath)
+            log.error ("The path is " + jsonFile.getAbsolutePath())
             jsonConfig = JSONConfigLoader.getConfigFromJSON('service', jsonFile)
         } catch (IOException e) {
             log.error e.message
         }
+
+        log.error ("The json is " + jsonConfig)
 
         key = jsonConfig?.email ?: config.key
         if (!key) {
