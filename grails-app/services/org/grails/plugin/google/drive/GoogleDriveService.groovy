@@ -117,6 +117,10 @@ class GoogleDriveService {
         drive.uploadFile(multipartFile, parentFolderName)
     }
 
+    File uploadFileByFolderId(MultipartFile multipartFile, String folderId = null) {
+        drive.uploadFileByFolderId(multipartFile, folderId)
+    }
+
     File makeDirectory(String name) {
         GoogleDrive.insertFolder(drive.native, name)
     }

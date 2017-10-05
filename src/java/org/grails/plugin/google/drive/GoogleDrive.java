@@ -259,6 +259,20 @@ public class GoogleDrive {
         return insertFile(drive, fileMetadata, null, multipartFile);
     }
 
+    public File uploadFileByFolderId(MultipartFile multipartFile, String folderId) throws IOException {
+
+        File fileMetadata = new File();
+        fileMetadata.setTitle(multipartFile.getOriginalFilename());
+        fileMetadata.setDescription(multipartFile.getOriginalFilename());
+        fileMetadata.setMimeType(multipartFile.getContentType());
+
+        // Set the parent folder.
+        if (folderId != null)
+            fileMetadata.setParents(Arrays.asList(new ParentReference().setId(folderId)));
+
+        return insertFile(drive, fileMetadata, null, multipartFile);
+    }
+
     public Drive getNative() {
         return drive;
     }
