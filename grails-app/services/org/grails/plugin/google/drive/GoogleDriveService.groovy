@@ -87,7 +87,7 @@ class GoogleDriveService {
             log.error e.message
         }
 
-        log.error ("The json is " + jsonConfig)
+        log.error ("The json is" + jsonConfig)
 
         key = jsonConfig?.email ?: config.key
         if (!key) {
