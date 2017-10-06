@@ -17,7 +17,10 @@ package org.grails.plugin.google.drive
 
 import com.google.api.services.drive.model.File
 import com.google.api.services.drive.model.Permission
+import org.apache.commons.fileupload.FileItem
+import org.apache.commons.fileupload.disk.DiskFileItemFactory
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import javax.annotation.PostConstruct
 
@@ -114,6 +117,21 @@ class GoogleDriveService {
 
     File uploadFileByFolderId(MultipartFile multipartFile, String folderId = null) {
         drive.uploadFileByFolderId(multipartFile, folderId)
+    }
+
+    void uploadFileByFolderIdUsingMultipart(String fileName,byte[] dataToInsert, String folderId){
+
+        java.io.File file = java.io.File.createTempFile("tmp",".csv")
+
+        FileItem fileItem = new DiskFileItemFactory().createItem("tmp/temporal","text/csv",true,fileName);
+
+        fileItem.getOutputStream().write(dataToInsert)
+
+        MultipartFile multipartFile = new CommonsMultipartFile(fileItem)
+
+        this.uploadFileByFolderId(multipartFile,folderId)
+
+        file.delete()
     }
 
     File makeDirectory(String name) {
