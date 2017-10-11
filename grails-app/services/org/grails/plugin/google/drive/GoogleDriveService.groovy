@@ -119,11 +119,11 @@ class GoogleDriveService {
         drive.uploadFileByFolderId(multipartFile, folderId)
     }
 
-    void uploadFileByFolderIdUsingMultipart(String fileName,byte[] dataToInsert, String folderId){
+    void uploadFileByFolderIdUsingMultipart(String fileName,byte[] dataToInsert, String folderId, String contentType = "text/csv"){
 
         java.io.File file = java.io.File.createTempFile("tmp",".csv")
 
-        FileItem fileItem = new DiskFileItemFactory().createItem("tmp/temporal","text/csv",true,fileName);
+        FileItem fileItem = new DiskFileItemFactory().createItem("tmp/temporal", contentType, true, fileName);
 
         fileItem.getOutputStream().write(dataToInsert)
 
@@ -148,6 +148,18 @@ class GoogleDriveService {
 
     def remove(String id) {
         drive.native.files().delete(id).execute()
+    }
+
+    void replaceFile(String name, String folderId, String content){
+
+        try{
+            List<String> filesIds = drive.native.files().list().setQ("\"$folderId\" in parents and mimeType=\"$content\"").execute().get("items").findAll({it.title == "$name"})*.get("id")
+
+            filesIds.each {remove(it)}
+        }catch(Exception ignore){}
+
+        uploadFileByFolderIdUsingMultipart(name, content.bytes, folderId)
+
     }
 
 }
