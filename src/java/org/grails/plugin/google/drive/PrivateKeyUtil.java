@@ -3,7 +3,7 @@ package org.grails.plugin.google.drive;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
-import java.util.Base64;
+import javax.xml.bind.DatatypeConverter;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,7 +32,7 @@ public class PrivateKeyUtil {
         String privateKey = new String(keyBytes, "UTF-8");
         privateKey = privateKey.replaceAll("(-+BEGIN RSA PRIVATE KEY-+\\r?\\n|-+END RSA PRIVATE KEY-+\\r?\\n?)", "");
 
-        keyBytes = Base64.getDecoder().decode(privateKey.getBytes());
+        keyBytes = DatatypeConverter.parseBase64Binary(privateKey);
 
         // generate private key
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
