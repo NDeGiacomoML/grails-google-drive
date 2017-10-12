@@ -150,10 +150,10 @@ class GoogleDriveService {
         drive.native.files().delete(id).execute()
     }
 
-    void replaceFile(String name, String folderId, String content){
+    void replaceFile(String name, String folderId, String content, String contentType){
 
         try{
-            List<String> filesIds = drive.native.files().list().setQ("\"$folderId\" in parents and mimeType=\"$content\"").execute().get("items").findAll({it.title == "$name"})*.get("id")
+            List<String> filesIds = drive.native.files().list().setQ("\"$folderId\" in parents and mimeType=\"$contentType\"").execute().get("items").findAll({it.title == "$name"})*.get("id")
 
             filesIds.each {remove(it)}
         }catch(Exception ignore){}
