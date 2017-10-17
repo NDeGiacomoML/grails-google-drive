@@ -42,18 +42,18 @@ class GoogleDriveService {
             switch (config.credentials.type) {
                 case 'web':
                     drive = getWebConfiguredDrive(config.credentials.filePath)
-                    break;
+                    break
                 case 'service':
                     drive = getServiceConfiguredDrive(config.json)
-                    break;
+                    break
             }
         }
     }
 
-    private def getWebConfiguredDrive(configFilePath) {
+    private def getWebConfiguredDrive(String configFilePath) {
         def config = grailsApplication.config.google.drive
-        def key = null
-        def secret = null
+        String key
+        String secret
         def jsonConfig = null
 
         try {
@@ -73,16 +73,13 @@ class GoogleDriveService {
             throw new RuntimeException('Google Drive API secret is not specified')
         }
 
-        return new GoogleDrive(key, secret, config.credentials.path, 'grails')
+        return new GoogleDrive(key, secret, (String) config.credentials.path, 'grails')
     }
 
     private def getServiceConfiguredDrive(json) {
         def config = grailsApplication.config.google.drive
-        def key = null
-        def secret = null
-        def jsonConfig = null
-
-
+        def key
+        def secret
 
         key = json?.client_email ?: config.key
         if (!key) {
@@ -107,35 +104,35 @@ class GoogleDriveService {
         GoogleDrive.foldersList(drive.native).getItems()
     }
 
-    File uploadFile(java.io.File file, String parentFolderName = null) {
-        drive.uploadFile(file, parentFolderName)
+    File uploadFile(java.io.File file, String parentFolderName = null, Boolean convert = false) {
+        drive.uploadFile(file, parentFolderName, convert)
     }
 
-    File uploadFile(MultipartFile multipartFile, String parentFolderName = null) {
-        drive.uploadFile(multipartFile, parentFolderName)
+    File uploadFile(MultipartFile multipartFile, String parentFolderName = null,  Boolean convert = false) {
+        drive.uploadFile(multipartFile, parentFolderName, convert)
     }
 
-    File uploadFileByFolderId(MultipartFile multipartFile, String folderId = null) {
-        drive.uploadFileByFolderId(multipartFile, folderId)
+    File uploadFileByFolderId(MultipartFile multipartFile, String folderId = null, Boolean convert) {
+        drive.uploadFileByFolderId(multipartFile, folderId, convert)
     }
 
-    void uploadFileByFolderIdUsingMultipart(String fileName,byte[] dataToInsert, String folderId, String contentType = "text/csv"){
+    void uploadFileByFolderIdUsingMultipart(String fileName, byte[] dataToInsert, String folderId, String contentType = "text/csv", Boolean convert){
 
         java.io.File file = java.io.File.createTempFile("tmp",".csv")
 
-        FileItem fileItem = new DiskFileItemFactory().createItem("tmp/temporal", contentType, true, fileName);
+        FileItem fileItem = new DiskFileItemFactory().createItem("tmp/temporal", contentType, true, fileName)
 
         fileItem.getOutputStream().write(dataToInsert)
 
         MultipartFile multipartFile = new CommonsMultipartFile(fileItem)
 
-        this.uploadFileByFolderId(multipartFile,folderId)
+        this.uploadFileByFolderId(multipartFile, folderId, convert)
 
         file.delete()
     }
 
     File makeDirectory(String name) {
-        GoogleDrive.insertFolder(drive.native, name)
+        GoogleDrive.insertFolder(drive.native, name, false)
     }
 
     def insertPermission(String fileId, String role, String type) {
@@ -150,15 +147,19 @@ class GoogleDriveService {
         drive.native.files().delete(id).execute()
     }
 
-    void replaceFile(String name, String folderId, String content, String contentType){
+    void replaceFile(String name, String folderId, String content, String contentType, Boolean convert){
+
+        String replaceContentType = ""
+        if (contentType == "text/csv")
+            replaceContentType = "application/vnd.google-apps.spreadsheet"
 
         try{
-            List<String> filesIds = drive.native.files().list().setQ("\"$folderId\" in parents and mimeType=\"$contentType\"").execute().get("items").findAll({it.title == "$name"})*.get("id")
-
+            List<String> filesIds = drive.native.files().list().setQ("\"$folderId\" in parents and mimeType=\"$replaceContentType\"").execute().get("items").findAll({it.title == "$name"})*.get("id")
             filesIds.each {remove(it)}
+
         }catch(Exception ignore){}
 
-        uploadFileByFolderIdUsingMultipart(name, content.bytes, folderId)
+        uploadFileByFolderIdUsingMultipart(name, content.bytes, folderId, contentType, convert)
 
     }
 

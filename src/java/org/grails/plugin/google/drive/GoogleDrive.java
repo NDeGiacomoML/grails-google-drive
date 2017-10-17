@@ -30,7 +30,6 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.SecurityUtils;
 import com.google.api.client.util.store.DataStore;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
@@ -44,9 +43,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.security.PrivateKey;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,17 +54,17 @@ public class GoogleDrive {
     /**
      * Define a global instance of the HTTP transport.
      */
-    public static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+    private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
     /**
      * Define a global instance of the JSON factory.
      */
-    public static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 
     static final Logger LOG = Logger.getLogger(GoogleDrive.class);
 
-    static final String FOLDER_TYPE = "application/vnd.google-apps.folder";
-    static final String FOLDERS_QUERY = "mimeType='" + FOLDER_TYPE + "' and trashed=false";
+    private static final String FOLDER_TYPE = "application/vnd.google-apps.folder";
+    private static final String FOLDERS_QUERY = "mimeType='" + FOLDER_TYPE + "' and trashed=false";
 
     private static final Tika TIKA = new Tika();
 
@@ -97,7 +93,7 @@ public class GoogleDrive {
 
     }
 
-    static Drive init(String clientId, String clientSecret, String credentialsPath, String credentialStore)
+    private static Drive init(String clientId, String clientSecret, String credentialsPath, String credentialStore)
             throws IOException, GeneralSecurityException {
         // Set up OAuth 2.0 access of protected resources
         // using the refresh and access tokens, automatically
@@ -108,7 +104,7 @@ public class GoogleDrive {
         return new Drive(HTTP_TRANSPORT, JSON_FACTORY, credential);
     }
 
-    static Drive init(String emailAddress, String privateKey, List<String> scopes) throws IOException, GeneralSecurityException  {
+    private static Drive init(String emailAddress, String privateKey, List<String> scopes) throws IOException, GeneralSecurityException  {
 
         GoogleCredential credential = new GoogleCredential.Builder()
                 .setTransport(HTTP_TRANSPORT)
@@ -121,8 +117,8 @@ public class GoogleDrive {
         return new Drive(HTTP_TRANSPORT, JSON_FACTORY, credential);
     }
 
-    static Credential authorize(String clientId, String clientSecret, String credentialsPath, String credentialStore,
-                                HttpTransport httpTransport, JsonFactory jsonFactory) throws IOException {
+    private static Credential authorize(String clientId, String clientSecret, String credentialsPath, String credentialStore,
+                                        HttpTransport httpTransport, JsonFactory jsonFactory) throws IOException {
         GoogleClientSecrets.Details installedDetails = new GoogleClientSecrets.Details();
         installedDetails.setClientId(clientId);
         installedDetails.setClientSecret(clientSecret);
@@ -141,15 +137,15 @@ public class GoogleDrive {
         return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
     }
 
-    static File insertFile(Drive drive, File metaData) throws IOException {
-        return insertFile(drive, metaData, null);
+    private static File insertFile(Drive drive, File metaData, Boolean convert) throws IOException {
+        return insertFile(drive, metaData, null, convert);
     }
 
-    static File insertFile(Drive drive, File metaData, String type) throws IOException {
-        return insertFile(drive, metaData, type, (java.io.File) null);
+    private static File insertFile(Drive drive, File metaData, String type, Boolean convert) throws IOException {
+        return insertFile(drive, metaData, type, (java.io.File) null, convert);
     }
 
-    static File insertFile(Drive drive, File metaData, String type, java.io.File media) throws IOException {
+    private static File insertFile(Drive drive, File metaData, String type, java.io.File media, Boolean convert) throws IOException {
         FileContent mediaContent = null;
 
         if (media != null) {
@@ -163,11 +159,11 @@ public class GoogleDrive {
         if (mediaContent != null) {
             request.getMediaHttpUploader().setProgressListener(new ProgressListener());
         }
-        request.setConvert(true); //TODO: Que esto se pase por parámetro?
+        request.setConvert(convert);
         return request.execute();
     }
 
-    static File insertFile(Drive drive, File metaData, String type, MultipartFile media) throws IOException {
+    private static File insertFile(Drive drive, File metaData, String type, MultipartFile media, Boolean convert) throws IOException {
         if (media == null) {
             throw new IllegalArgumentException("Media can't be null");
         }
@@ -178,16 +174,16 @@ public class GoogleDrive {
 
         Drive.Files.Insert request = drive.files().insert(metaData, mediaContent);
         request.getMediaHttpUploader().setProgressListener(new ProgressListener());
-        request.setConvert(true); //TODO: Que esto se pase por parámetro?
+        request.setConvert(convert);
         return request.execute();
     }
 
-    static File insertFolder(Drive drive, String folderName) throws IOException {
+    static File insertFolder(Drive drive, String folderName, Boolean convert) throws IOException {
         File folder = new File();
         folder.setTitle(folderName);
         folder.setMimeType(FOLDER_TYPE);
 
-        return insertFile(drive, folder);
+        return insertFile(drive, folder, convert);
     }
 
     static FileList foldersList(Drive drive) throws IOException {
@@ -195,7 +191,7 @@ public class GoogleDrive {
         return request.execute();
     }
 
-    static File getFolderByName(Drive drive, String folderName) throws IOException {
+    private static File getFolderByName(Drive drive, String folderName) throws IOException {
         for (File folder : foldersList(drive).getItems()) {
             if (folder.getTitle().equals(folderName))
                 return folder;
@@ -203,7 +199,7 @@ public class GoogleDrive {
         return null;
     }
 
-    static String getFolderId(Drive drive, String folderName) throws IOException {
+    private static String getFolderId(Drive drive, String folderName) throws IOException {
         File folder = getFolderByName(drive, folderName);
         if (folder != null)
             return folder.getId();
@@ -221,31 +217,31 @@ public class GoogleDrive {
 
     private Drive drive;
 
-    public File uploadFile(java.io.File file) throws IOException {
-        return uploadFile(file, null);
+    public File uploadFile(java.io.File file, Boolean convert) throws IOException {
+        return uploadFile(file, null, convert);
     }
 
-    public File uploadFile(java.io.File file, String rootFolderName) throws IOException {
+    public File uploadFile(java.io.File file, String rootFolderName, Boolean convert) throws IOException {
         String folderId = rootFolderName != null ? getFolderId(drive, rootFolderName) : null;
 
         if (folderId == null)
-            folderId = insertFolder(drive, rootFolderName).getId();
+            folderId = insertFolder(drive, rootFolderName, convert).getId();
 
         File fileMetadata = new File();
         fileMetadata.setTitle(file.getName());
 
         // Set the parent folder.
         if (folderId != null)
-            fileMetadata.setParents(Arrays.asList(new ParentReference().setId(folderId)));
+            fileMetadata.setParents(Collections.singletonList(new ParentReference().setId(folderId)));
 
-        return insertFile(drive, fileMetadata, null, file);
+        return insertFile(drive, fileMetadata, null, file, convert);
     }
 
-    public File uploadFile(MultipartFile multipartFile, String rootFolderName) throws IOException {
+    public File uploadFile(MultipartFile multipartFile, String rootFolderName, Boolean convert) throws IOException {
         String folderId = rootFolderName != null ? getFolderId(drive, rootFolderName) : null;
 
         if (folderId == null)
-            folderId = insertFolder(drive, rootFolderName).getId();
+            folderId = insertFolder(drive, rootFolderName, convert).getId();
 
         File fileMetadata = new File();
         fileMetadata.setTitle(multipartFile.getOriginalFilename());
@@ -254,12 +250,12 @@ public class GoogleDrive {
 
         // Set the parent folder.
         if (folderId != null)
-            fileMetadata.setParents(Arrays.asList(new ParentReference().setId(folderId)));
+            fileMetadata.setParents(Collections.singletonList(new ParentReference().setId(folderId)));
 
-        return insertFile(drive, fileMetadata, null, multipartFile);
+        return insertFile(drive, fileMetadata, multipartFile.getContentType(), multipartFile, convert);
     }
 
-    public File uploadFileByFolderId(MultipartFile multipartFile, String folderId) throws IOException {
+    public File uploadFileByFolderId(MultipartFile multipartFile, String folderId, Boolean convert) throws IOException {
 
         File fileMetadata = new File();
         fileMetadata.setTitle(multipartFile.getOriginalFilename());
@@ -268,9 +264,9 @@ public class GoogleDrive {
 
         // Set the parent folder.
         if (folderId != null)
-            fileMetadata.setParents(Arrays.asList(new ParentReference().setId(folderId)));
+            fileMetadata.setParents(Collections.singletonList(new ParentReference().setId(folderId)));
 
-        return insertFile(drive, fileMetadata, null, multipartFile);
+        return insertFile(drive, fileMetadata, multipartFile.getContentType(), multipartFile, convert);
     }
 
     public Drive getNative() {
